@@ -19,60 +19,88 @@ contract SmartDisperse is Ownable {
        
     }
     
-   
+     event EtherDispersed(address payable[] indexed _recipients,uint256[] indexed _values);
+    event ERC20TokenDispersed(IERC20 indexed _token, address[] indexed _recipients, uint256[] _values);
+
     /**
      * @dev to withraw ERC20 Tokens sent directly to the contract
      */
-    function withdrawERC20Tokens(IERC20 token, uint256 amount) external onlyOwner {
+    function withdrawERC20Tokens(IERC20 _token, uint256 _amount) external onlyOwner {
         address owner = owner();
-        require(token.transfer(owner,amount));
+         require(
+            _token.balanceOf(address(this)) >= _amount,
+            "Contract has Insufficient balance"
+        );
+        require(_token.transfer(owner,_amount));
     }
 
     /**
      * @dev Disperse ether among multiple recipients.
-     * @param recipients Array of recipient addresses.
-     * @param values Array of corresponding ether values to be transferred.
+     * @param _recipients Array of recipient addresses.
+     * @param _values Array of corresponding ether values to be transferred.
      */
-    function disperseEther(address payable[] memory recipients, uint256[] memory values) external payable {
+    function disperseEther(address payable[] memory _recipients, uint256[] memory _values) external payable {
     
-        for (uint256 i = 0; i < recipients.length; i++) {
-            recipients[i].transfer(values[i]);
+        for (uint256 i = 0; i < _recipients.length; i++) {
+            _recipients[i].transfer(_values[i]);
+             
         }
+              emit EtherDispersed(_recipients,_values);
+
         uint256 balance = address(this).balance;
        
         if (balance > 0) {
             payable(msg.sender).transfer(balance);
         }
 
+
+    }
+
+
+     function disperseEtherSimple(address  payable _recipients, uint256 _values) external payable {
+    
+    
+            _recipients.transfer(_values);
+             
+        
+        uint256 balance = address(this).balance;
+       
+        if (balance > 0) {
+            payable(msg.sender).transfer(balance);
+        }
+
+
     }
 
     /**
      * @dev Disperse ERC-20 tokens among multiple recipients.
-     * @param token ERC-20 token contract address Instance.
-     * @param recipients Array of recipient addresses.
-     * @param values Array of corresponding token values to be transferred.
+     * @param _token ERC-20 token contract address Instance.
+     * @param _recipients Array of recipient addresses.
+     * @param _values Array of corresponding token values to be transferred.
      */
 
-    function disperseToken(IERC20 token, address[] memory recipients, uint256[] memory values) external {
+    function disperseToken(IERC20 _token, address[] memory _recipients, uint256[] memory _values) external {
         uint256 total = 0;
-        for (uint256 i = 0; i < recipients.length; i++) {
-            total += values[i];
+        for (uint256 i = 0; i < _recipients.length; i++) {
+            total += _values[i];
         }
-        require(token.transferFrom(msg.sender, address(this), total));
-        for (uint256 i = 0; i < recipients.length; i++) {
-            require(token.transfer(recipients[i], values[i]));
+        require(_token.transferFrom(msg.sender, address(this), total));
+        for (uint256 i = 0; i < _recipients.length; i++) {
+            require(_token.transfer(_recipients[i], _values[i]));
         }
+             emit ERC20TokenDispersed(_token,_recipients,_values);
     }
 
     /**
      * @dev Disperse ERC-20 tokens direct among multiple recipients in a single transaction.
-     * @param token ERC-20 token contract address Instance.
-     * @param recipients Array of recipient addresses.
-     * @param values Array of corresponding token values to be transferred.
+     * @param _token ERC-20 token contract address Instance.
+     * @param _recipients Array of recipient addresses.
+     * @param _values Array of corresponding token values to be transferred.
      */
-    function disperseTokenSimple(IERC20 token, address[] memory recipients, uint256[] memory values) external {
-        for (uint256 i = 0; i < recipients.length; i++) {
-            require(token.transferFrom(msg.sender, recipients[i], values[i]));
+    function disperseTokenSimple(IERC20 _token, address[] memory _recipients, uint256[] memory _values) external {
+        for (uint256 i = 0; i < _recipients.length; i++) {
+            require(_token.transferFrom(msg.sender, _recipients[i], _values[i]));
         }
+         emit ERC20TokenDispersed(_token,_recipients,_values);
     }
 }

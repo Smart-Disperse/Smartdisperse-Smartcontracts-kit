@@ -19,8 +19,8 @@ contract SmartDisperse is Ownable {
        
     }
     
-     event EtherDispersed(address payable[] indexed _recipients,uint256[] indexed _values);
-    event ERC20TokenDispersed(IERC20 indexed _token, address[] indexed _recipients, uint256[] _values);
+     event EtherDispersed(address _sender ,address payable[] _recipients,uint256[] _values);
+    event ERC20TokenDispersed(address _sender, IERC20 _token, address[] _recipients, uint256[] _values);
 
     /**
      * @dev to withraw ERC20 Tokens sent directly to the contract
@@ -45,24 +45,8 @@ contract SmartDisperse is Ownable {
             _recipients[i].transfer(_values[i]);
              
         }
-              emit EtherDispersed(_recipients,_values);
+              emit EtherDispersed(msg.sender,_recipients,_values);
 
-        uint256 balance = address(this).balance;
-       
-        if (balance > 0) {
-            payable(msg.sender).transfer(balance);
-        }
-
-
-    }
-
-
-     function disperseEtherSimple(address  payable _recipients, uint256 _values) external payable {
-    
-    
-            _recipients.transfer(_values);
-             
-        
         uint256 balance = address(this).balance;
        
         if (balance > 0) {
@@ -88,7 +72,7 @@ contract SmartDisperse is Ownable {
         for (uint256 i = 0; i < _recipients.length; i++) {
             require(_token.transfer(_recipients[i], _values[i]));
         }
-             emit ERC20TokenDispersed(_token,_recipients,_values);
+             emit ERC20TokenDispersed(msg.sender,_token,_recipients,_values);
     }
 
     /**
@@ -101,6 +85,6 @@ contract SmartDisperse is Ownable {
         for (uint256 i = 0; i < _recipients.length; i++) {
             require(_token.transferFrom(msg.sender, _recipients[i], _values[i]));
         }
-         emit ERC20TokenDispersed(_token,_recipients,_values);
+         emit ERC20TokenDispersed(msg.sender,_token,_recipients,_values);
     }
 }
